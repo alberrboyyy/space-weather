@@ -430,3 +430,13 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# macOS
+.DS_Store
+
+# LibreOffice/OpenOffice lock files (Journal de travail)
+.~lock.*#

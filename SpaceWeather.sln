@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9AFF79E6-1233-4270-9C9D-F6C7D2C1B306}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceWeather.Core", "src\SpaceWeather.Core\SpaceWeather.Core.csproj", "{CD909DE6-4AA8-4E76-8C26-D04BA50B740B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceWeather.App", "src\SpaceWeather.App\SpaceWeather.App.csproj", "{4610220C-1DD2-448B-9854-5348996445C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CD909DE6-4AA8-4E76-8C26-D04BA50B740B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD909DE6-4AA8-4E76-8C26-D04BA50B740B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD909DE6-4AA8-4E76-8C26-D04BA50B740B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD909DE6-4AA8-4E76-8C26-D04BA50B740B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4610220C-1DD2-448B-9854-5348996445C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4610220C-1DD2-448B-9854-5348996445C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4610220C-1DD2-448B-9854-5348996445C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4610220C-1DD2-448B-9854-5348996445C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CD909DE6-4AA8-4E76-8C26-D04BA50B740B} = {9AFF79E6-1233-4270-9C9D-F6C7D2C1B306}
+		{4610220C-1DD2-448B-9854-5348996445C3} = {9AFF79E6-1233-4270-9C9D-F6C7D2C1B306}
+	EndGlobalSection
+EndGlobal
