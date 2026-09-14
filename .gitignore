@@ -1,4 +1,4 @@
-
+data/
 
 
 ## Ignore Visual Studio temporary files, build results, and
@@ -438,5 +438,5 @@ FodyWeavers.xsd
 # macOS
 .DS_Store
 
-# LibreOffice/OpenOffice lock files (Journal de travail)
+# LibreOffice/OpenOffice lock files
 .~lock.*#
