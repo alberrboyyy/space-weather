@@ -1,14 +1,20 @@
+using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using SpaceWeather.App.Extensions;
 using SpaceWeather.App.ViewModels;
 using SpaceWeather.Core.Import;
+using SpaceWeather.Core.Storage;
 
 namespace SpaceWeather.App.Views;
 
 public partial class MainWindow : Window
 {
+    // Intervale des mesures NOAA
+    private static readonly TimeSpan SampleInterval = TimeSpan.FromMinutes(5);
+
     // Raccourci pour éviter de caster DataContext partout. Le ! garanti au compilateur que la valeur ne sera pas nulle
     private MainViewModel ViewModel => (MainViewModel)DataContext!;
 
@@ -21,7 +27,10 @@ public partial class MainWindow : Window
         DataContextChanged += (_, _) =>
         {
             if (DataContext is MainViewModel vm)
+            {
                 vm.PlotInvalidated += (_, _) => RefreshPlot();
+                RefreshPlot();
+            }
         };
     }
 
@@ -42,9 +51,14 @@ public partial class MainWindow : Window
             return;
 
         // file.Path est une URI, LocalPath donne un vrai chemin disque
-        var series = NoaaProtonFileImporter.ImportFromFile(file.Path.LocalPath);
-        // Relai des TimeSeries au ViewModel
-        ViewModel.LoadSeries(series);
+        var imported = NoaaProtonFileImporter.ImportFromFile(file.Path.LocalPath);
+
+        // Fusionne avec ce qui est actuellement affiché
+        var current = ViewModel.Series.Select(t => t.Series).ToList();
+        var merged = LocalSeriesStore.Merge(current, imported);
+
+        LocalSeriesStore.Save(AppPaths.SeriesFile, merged);
+        ViewModel.LoadSeries(merged);
     }
 
     private void RefreshPlot()
@@ -56,10 +70,8 @@ public partial class MainWindow : Window
         // que l'état IsChecked d'une checkbox influence vraiment l'affichage
         foreach (var toggle in ViewModel.Series.Where(t => t.IsChecked))
         {
-            // ScottPlot attend des tableaux de double, pas des TimeSeriesPoint :
-            // ToOADate() convertit chaque DateTime en nombre
-            var xs = toggle.Series.Points.Select(p => p.Timestamp.ToOADate()).ToArray();
-            var ys = toggle.Series.Points.Select(p => p.Value).ToArray();
+            // ToPlotArrays coupe la ligne dès que l'écart dépasse la cadence normale
+            var (xs, ys) = toggle.Series.Points.ToPlotArrays(SampleInterval);
             // Ajoute la courbe et l'étiquette dans la légende avec le nom de la série
             PlotControl.Plot.Add.ScatterLine(xs, ys).LegendText = toggle.Name;
         }

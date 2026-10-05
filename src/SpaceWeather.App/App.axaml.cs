@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using SpaceWeather.App.ViewModels;
 using SpaceWeather.App.Views;
+using SpaceWeather.Core.Storage;
 
 namespace SpaceWeather.App;
 
@@ -20,10 +21,17 @@ public partial class App : Application
         // Vrai uniquement pour une appli desktop classique
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var viewModel = new MainViewModel();
+
+            // Reload des points ajoutés dans le passé
+            var stored = LocalSeriesStore.Load(AppPaths.SeriesFile);
+            if (stored.Count > 0)
+                viewModel.LoadSeries(stored);
+
             desktop.MainWindow = new MainWindow
             {
                 // DataContext posé après le constructeur de MainWindow
-                DataContext = new MainViewModel(),
+                DataContext = viewModel,
             };
         }
 
