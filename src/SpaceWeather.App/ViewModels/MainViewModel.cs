@@ -19,6 +19,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasData;
 
+    // Message affiché en cas d'échec d'un import ou d'une récupération NOAA
+    [ObservableProperty]
+    private string? _errorMessage;
+
     // Imports
     public void LoadSeries(List<TimeSeries> series)
     {

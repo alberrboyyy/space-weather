@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using SpaceWeather.App.Extensions;
 using SpaceWeather.App.ViewModels;
 using SpaceWeather.Core.Import;
+using SpaceWeather.Core.Models;
 using SpaceWeather.Core.Storage;
 
 namespace SpaceWeather.App.Views;
@@ -14,6 +17,13 @@ public partial class MainWindow : Window
 {
     // Intervale des mesures NOAA
     private static readonly TimeSpan SampleInterval = TimeSpan.FromMinutes(5);
+
+    // Fenêtre la plus large disponible sur l'API temps réel de la NOAA (pas d'historique complet)
+    private const string NoaaLiveUrl = "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-7-day.json";
+
+    // Un seul HttpClient réutilisé pour toute la durée de vie de la fenêtre (recommandé par .NET,
+    // en créer un nouveau à chaque appel peut épuiser les sockets disponibles)
+    private static readonly HttpClient HttpClient = new();
 
     // Raccourci pour éviter de caster DataContext partout. Le ! garanti au compilateur que la valeur ne sera pas nulle
     private MainViewModel ViewModel => (MainViewModel)DataContext!;
@@ -50,15 +60,44 @@ public partial class MainWindow : Window
         if (file is null)
             return;
 
-        // file.Path est une URI, LocalPath donne un vrai chemin disque
-        var imported = NoaaProtonFileImporter.ImportFromFile(file.Path.LocalPath);
+        try
+        {
+            // file.Path est une URI, LocalPath donne un vrai chemin disque
+            var imported = NoaaProtonFileImporter.ImportFromFile(file.Path.LocalPath);
+            ApplyImportedSeries(imported);
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ErrorMessage = $"Échec de l'import : {ex.Message}";
+        }
+    }
 
-        // Fusionne avec ce qui est actuellement affiché
+    // Relié au Click du bouton "Récupérer depuis la NOAA" dans le xaml
+    private async void OnPullClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var json = await HttpClient.GetStringAsync(NoaaLiveUrl);
+            var imported = NoaaProtonFileImporter.ImportFromJson(json);
+            ApplyImportedSeries(imported);
+        }
+        catch (Exception ex)
+        {
+            // Pas de wifi, NOAA indisponible, JSON invalide, etc. : message affiché, pas de crash
+            ViewModel.ErrorMessage = $"Échec de la récupération NOAA : {ex.Message}";
+        }
+    }
+
+    // Fusionne les nouvelles séries avec celles déjà affichées, sauvegarde, recharge le ViewModel.
+    // Commun aux deux boutons (import fichier et récupération NOAA).
+    private void ApplyImportedSeries(List<TimeSeries> imported)
+    {
         var current = ViewModel.Series.Select(t => t.Series).ToList();
         var merged = LocalSeriesStore.Merge(current, imported);
 
         LocalSeriesStore.Save(AppPaths.SeriesFile, merged);
         ViewModel.LoadSeries(merged);
+        ViewModel.ErrorMessage = null;
     }
 
     private void RefreshPlot()

@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SpaceWeather.App.ViewModels"
         xmlns:scottplot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+        xmlns:conv="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="500"
@@ -32,6 +33,17 @@
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"
                     Padding="0,10" />
+
+            <Button Content="Récupérer depuis la NOAA"
+                    Click="OnPullClick"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    Padding="0,10" />
+
+            <TextBlock Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}"
+                       Foreground="Red"
+                       TextWrapping="Wrap" />
         </StackPanel>
 
         <Grid Grid.Column="1">
