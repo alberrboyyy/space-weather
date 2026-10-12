@@ -15,6 +15,7 @@ public static class LocalSeriesStore
         return JsonSerializer.Deserialize<List<TimeSeries>>(json) ?? [];
     }
 
+    // TODO : tout le fichier est réécrit à chaque import
     public static void Save(string filePath, List<TimeSeries> series)
     {
         // Crée le dossier parent s'il n'existe pas encore

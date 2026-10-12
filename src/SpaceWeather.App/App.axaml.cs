@@ -24,6 +24,7 @@ public partial class App : Application
             var viewModel = new MainViewModel();
 
             // Reload des points ajoutés dans le passé
+            // TODO : un series.json corrompu fait planter l'app au démarrage
             var stored = LocalSeriesStore.Load(AppPaths.SeriesFile);
             if (stored.Count > 0)
                 viewModel.LoadSeries(stored);

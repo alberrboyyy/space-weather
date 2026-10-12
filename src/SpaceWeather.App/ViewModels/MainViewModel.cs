@@ -24,6 +24,7 @@ public partial class MainViewModel : ViewModelBase
     private string? _errorMessage;
 
     // Imports
+    // TODO : les cases décochées sont recochées après chaque import, l'état IsChecked n'est pas conservé
     public void LoadSeries(List<TimeSeries> series)
     {
         foreach (var toggle in Series)

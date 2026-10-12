@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         };
     }
 
+    // TODO : la logique d'import est dans le code-behind, elle devrait être dans le ViewModel pour respecter MVVM
     // Relié au Click du bouton "Importer des données" dans le xaml
     private async void OnImportClick(object? sender, RoutedEventArgs e)
     {
@@ -63,6 +64,7 @@ public partial class MainWindow : Window
         try
         {
             // file.Path est une URI, LocalPath donne un vrai chemin disque
+            // TODO : lecture synchrone sur le thread de l'UI, un gros fichier bloquerait la fenêtre
             var imported = NoaaProtonFileImporter.ImportFromFile(file.Path.LocalPath);
             ApplyImportedSeries(imported);
         }
@@ -112,6 +114,7 @@ public partial class MainWindow : Window
             // ToPlotArrays coupe la ligne dès que l'écart dépasse la cadence normale
             var (xs, ys) = toggle.Series.Points.ToPlotArrays(SampleInterval);
             // Ajoute la courbe et l'étiquette dans la légende avec le nom de la série
+            // TODO : les couleurs sont attribuées selon l'ordre, décocher une série change la couleur des suivantes
             PlotControl.Plot.Add.ScatterLine(xs, ys).LegendText = toggle.Name;
         }
 

@@ -29,7 +29,7 @@ Les séries proviennent du même satellite, ont la même unité et la même cade
 
 # 2. Analyse fonctionnelle
 
-- **[US1](https://github.com/alberrboyyy/space-weather/issues/1)***
+- **[US1](https://github.com/alberrboyyy/space-weather/issues/1)**
 - **[US2](https://github.com/alberrboyyy/space-weather/issues/2)**
 - **[US3](https://github.com/alberrboyyy/space-weather/issues/3)**
 - **[US4](https://github.com/alberrboyyy/space-weather/issues/4)**
