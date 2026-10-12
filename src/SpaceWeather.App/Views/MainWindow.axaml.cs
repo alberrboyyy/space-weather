@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using SpaceWeather.App.Extensions;
 using SpaceWeather.App.ViewModels;
 using SpaceWeather.Core.Import;
 using SpaceWeather.Core.Models;
 using SpaceWeather.Core.Storage;
+using ScottPlot.AxisRules;
+using ScottPlot.Interactivity;
+using ScottPlot.Interactivity.UserActionResponses;
 
 namespace SpaceWeather.App.Views;
 
@@ -28,9 +33,23 @@ public partial class MainWindow : Window
     // Raccourci pour éviter de caster DataContext partout. Le ! garanti au compilateur que la valeur ne sera pas nulle
     private MainViewModel ViewModel => (MainViewModel)DataContext!;
 
+    // Première et dernière date des séries cochées (format ToOADate), bornes de la scrollbar
+    private double _dataMinX;
+    private double _dataMaxX;
+
     public MainWindow()
     {
         InitializeComponent();
+
+        // Par défaut le double-clic de ScottPlot affiche un benchmark, on le remplace par un retour à la vue complète
+        PlotControl.UserInputProcessor.RemoveAll<DoubleClickBenchmark>();
+        PlotControl.UserInputProcessor.UserActionResponses.Add(
+            new DoubleClickResponse(StandardMouseButtons.Left, (_, _) => PlotControl.Plot.Axes.AutoScale()));
+
+        // Déclenché à chaque changement de vue (molette, glissé, double-clic, scrollbar) pour garder la scrollbar à jour.
+        // ScottPlot dessine sur le thread de rendu d'Avalonia, or les contrôles ne peuvent être modifiés que depuis le thread de l'UI :
+        // Post renvoie la mise à jour sur le bon thread
+        PlotControl.Plot.RenderManager.AxisLimitsChanged += (_, _) => Dispatcher.UIThread.Post(UpdateScrollBar);
 
         // A cet instant DataContext est encore null on attend donc DataContextChanged
         // pour s'abonner au PlotInvalidated du ViewModel une seule fois.
@@ -109,19 +128,61 @@ public partial class MainWindow : Window
 
         // Seules les séries actuellement cochées sont dessinées : c'est ici,
         // que l'état IsChecked d'une checkbox influence vraiment l'affichage
+        var legend = new List<LegendEntry>();
         foreach (var toggle in ViewModel.Series.Where(t => t.IsChecked))
         {
             // ToPlotArrays coupe la ligne dès que l'écart dépasse la cadence normale
             var (xs, ys) = toggle.Series.Points.ToPlotArrays(SampleInterval);
-            // Ajoute la courbe et l'étiquette dans la légende avec le nom de la série
             // TODO : les couleurs sont attribuées selon l'ordre, décocher une série change la couleur des suivantes
-            PlotControl.Plot.Add.ScatterLine(xs, ys).LegendText = toggle.Name;
+            var line = PlotControl.Plot.Add.ScatterLine(xs, ys);
+            var color = Avalonia.Media.Color.FromArgb(line.Color.A, line.Color.R, line.Color.G, line.Color.B);
+            legend.Add(new LegendEntry(toggle.Name, new Avalonia.Media.SolidColorBrush(color)));
+        }
+        LegendList.ItemsSource = legend;
+
+        var visiblePoints = ViewModel.Series
+            .Where(t => t.IsChecked)
+            .SelectMany(t => t.Series.Points)
+            .ToList();
+
+        // Rien n'empêche l'utilisateur de tout décocher
+        PlotControl.Plot.Axes.Rules.Clear();
+        if (visiblePoints.Count > 0)
+        {
+            _dataMinX = visiblePoints.Min(p => p.Timestamp).ToOADate();
+            _dataMaxX = visiblePoints.Max(p => p.Timestamp).ToOADate();
+
+            // L'axe Y est verrouillé sur toute la plage des valeurs
+            var yMin = visiblePoints.Min(p => p.Value);
+            var yMax = visiblePoints.Max(p => p.Value);
+            var margin = (yMax - yMin) * 0.05;
+            PlotControl.Plot.Axes.Rules.Add(new LockedVertical(PlotControl.Plot.Axes.Left, yMin - margin, yMax + margin));
         }
 
         // Affiche les dates lisibles sur l'axe du bas plutôt que les nombres bruts de ToOADate()
         PlotControl.Plot.Axes.DateTimeTicksBottom();
-        PlotControl.Plot.ShowLegend();
         // Force le contrôle à se redessiner à l'écran avec les nouvelles données
+        PlotControl.Refresh();
+        UpdateScrollBar();
+    }
+
+    private void UpdateScrollBar()
+    {
+        var limits = PlotControl.Plot.Axes.GetLimits();
+        var visibleWidth = limits.Right - limits.Left;
+
+        TimeScrollBar.Minimum = _dataMinX;
+        TimeScrollBar.Maximum = Math.Max(_dataMinX, _dataMaxX - visibleWidth);
+        TimeScrollBar.ViewportSize = visibleWidth;
+        TimeScrollBar.Value = Math.Clamp(limits.Left, TimeScrollBar.Minimum, TimeScrollBar.Maximum);
+    }
+
+    private void OnTimeScroll(object? sender, ScrollEventArgs e)
+    {
+        var limits = PlotControl.Plot.Axes.GetLimits();
+        var visibleWidth = limits.Right - limits.Left;
+
+        PlotControl.Plot.Axes.SetLimitsX(e.NewValue, e.NewValue + visibleWidth);
         PlotControl.Refresh();
     }
 }
