@@ -121,6 +121,17 @@ public partial class MainWindow : Window
         ViewModel.ErrorMessage = null;
     }
 
+    // Dessine la courbe d'une série et renvoie sa ligne de légende, avec la couleur que ScottPlot lui a donnée
+    private LegendEntry AddLine(SeriesToggleViewModel toggle)
+    {
+        // ToPlotArrays coupe la ligne dès que l'écart dépasse la cadence normale
+        var (xs, ys) = toggle.Series.Points.ToPlotArrays(SampleInterval);
+        // TODO : les couleurs sont attribuées selon l'ordre, décocher une série change la couleur des suivantes
+        var line = PlotControl.Plot.Add.ScatterLine(xs, ys);
+        var color = Avalonia.Media.Color.FromArgb(line.Color.A, line.Color.R, line.Color.G, line.Color.B);
+        return new LegendEntry(toggle.Name, new Avalonia.Media.SolidColorBrush(color));
+    }
+
     private void RefreshPlot()
     {
         // Efface les anciennes courbes, sinon un second import les empilerait sur les nouvelles
@@ -128,17 +139,10 @@ public partial class MainWindow : Window
 
         // Seules les séries actuellement cochées sont dessinées : c'est ici,
         // que l'état IsChecked d'une checkbox influence vraiment l'affichage
-        var legend = new List<LegendEntry>();
-        foreach (var toggle in ViewModel.Series.Where(t => t.IsChecked))
-        {
-            // ToPlotArrays coupe la ligne dès que l'écart dépasse la cadence normale
-            var (xs, ys) = toggle.Series.Points.ToPlotArrays(SampleInterval);
-            // TODO : les couleurs sont attribuées selon l'ordre, décocher une série change la couleur des suivantes
-            var line = PlotControl.Plot.Add.ScatterLine(xs, ys);
-            var color = Avalonia.Media.Color.FromArgb(line.Color.A, line.Color.R, line.Color.G, line.Color.B);
-            legend.Add(new LegendEntry(toggle.Name, new Avalonia.Media.SolidColorBrush(color)));
-        }
-        LegendList.ItemsSource = legend;
+        LegendList.ItemsSource = ViewModel.Series
+            .Where(t => t.IsChecked)
+            .Select(AddLine)
+            .ToList();
 
         var visiblePoints = ViewModel.Series
             .Where(t => t.IsChecked)

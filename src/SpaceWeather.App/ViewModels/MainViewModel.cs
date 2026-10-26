@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SpaceWeather.Core.Models;
 
@@ -12,8 +13,10 @@ public partial class MainViewModel : ViewModelBase
     // L'UI ne connait pas scottplot il se contante donc d'annoncer un changement
     public event EventHandler? PlotInvalidated;
 
-    // Comme une List<T>, mais elle prévient automatiquement Avalonia quand il y a modification des checkboxes
-    public ObservableCollection<SeriesToggleViewModel> Series { get; } = [];
+    // Comme une List<T>, mais elle prévient automatiquement Avalonia quand il y a modification des checkboxes.
+    // ObservableProperty pour que l'UI soit aussi prévenue quand LoadSeries remplace la collection entière
+    [ObservableProperty]
+    private ObservableCollection<SeriesToggleViewModel> _series = [];
 
     // Attribut mvvm qui génère une propriété publique HasData avec la notification de changement
     [ObservableProperty]
@@ -31,18 +34,12 @@ public partial class MainViewModel : ViewModelBase
             // Desabonnement aux anciennes données pour préparer un import
             toggle.PropertyChanged -= OnToggleChanged;
 
-        // Vide la collection, comme series est une ObservableCollection, une mise a jour visuelle est directement déclanchée
-        Series.Clear();
+        // Pour chaque TimeSeries on crée un SeriesToggleViewModel, puis on remplace l'ancienne collection
+        Series = new ObservableCollection<SeriesToggleViewModel>(series.Select(s => new SeriesToggleViewModel(s)));
 
-        foreach (var s in series)
-        {
-            // Pour chaque TimeSeries on crée un SeriesToggleViewModel
-            var toggle = new SeriesToggleViewModel(s);
+        foreach (var toggle in Series)
             // On s'abonne a son PropertyChanged
             toggle.PropertyChanged += OnToggleChanged;
-            // Enfin on l'ajoute à Series
-            Series.Add(toggle);
-        }
 
         // On recalcule HasData
         HasData = Series.Count > 0;
