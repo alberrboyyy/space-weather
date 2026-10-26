@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using SpaceWeather.Core.Models;
 
-namespace SpaceWeather.App.Extensions;
+namespace SpaceWeather.Core.Extensions;
 
 public static class TimeSeriesPointExtensions
 {

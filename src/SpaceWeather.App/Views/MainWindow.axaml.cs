@@ -7,7 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using SpaceWeather.App.Extensions;
+using SpaceWeather.Core.Extensions;
 using SpaceWeather.App.ViewModels;
 using SpaceWeather.Core.Import;
 using SpaceWeather.Core.Models;
